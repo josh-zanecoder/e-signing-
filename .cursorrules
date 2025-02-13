@@ -1,0 +1,38 @@
+# .cursorrules
+file creation:
+  - always rely on my current state of the project
+  - when applying a revision, always apply it to the correct file
+  - when creating a new file, always create it in the correct directory
+  - when suggesting make it concise and to the point
+
+# User Interface (Frontend) with HTMX
+frontend_htmx:
+  - description: Use HTMX to create dynamic, responsive web forms for PDF uploads, leveraging `hx-get` and `hx-post` for AJAX operations.
+  - description: Implement PDF preview functionality with `hx-swap` for efficient content display and swap.
+  - description: Use `hx-target` to specify precise locations in the DOM for server response content injection.
+  - description: Optimize user interactions and responsiveness with `hx-trigger` configurations.
+
+# Backend Processing with Django and DRF
+backend_drf:
+  - description: Deploy DRF with serializers to handle PDF uploads, ensuring secure and efficient file handling.
+  - description: Implement a robust DRF endpoint for detecting and managing signature placeholders within PDFs.
+  - description: Utilize Django ORM for database operations and maintain security by avoiding raw SQL queries.
+  - description: Save signed PDFs systematically using Django’s file handling capabilities and offer downloadable links via DRF APIs.
+
+# Security and Performance Best Practices
+security_and_performance:
+  - description: Implement CSRF protection on form submissions and apply JWT for secure API authentication.
+  - description: Enable CORS to define and restrict cross-origin requests to trusted domains only.
+  - description: Utilize Django's caching mechanisms, such as Redis, to boost response times and reduce load.
+
+# Workflow Integration
+workflow:
+  - description: Ensure seamless integration between HTMX frontend and DRF backend for the file processing pipeline.
+  - description: Use HTMX to manage dynamic content updates and provide real-time feedback to the user during the signing process.
+  - description: Maintain an organized, modular structure in Django applications to ensure separation of concerns and reusability.
+
+# General Coding and Style Conventions
+conventions:
+  - description: Follow PEP 8 for Python code, ensuring clear, descriptive naming for variables and functions.
+  - description: Keep views focused on request handling and offload business logic to models or forms.
+  - description: Use Django’s class-based views for complex interactions, leveraging DRF’s viewsets for API endpoints.

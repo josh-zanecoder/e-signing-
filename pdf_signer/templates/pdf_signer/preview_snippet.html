@@ -1,0 +1,32 @@
+<div class="preview-container">
+  {% if success %}
+  <div class="success-message">{{ message }}</div>
+  <div class="pdf-preview">
+    <h3>PDF Preview</h3>
+    {% if document %} {% if document.original_pdf %}
+    <div class="pdf-viewer">
+      <object
+        data="{{ document.original_pdf.url }}"
+        type="application/pdf"
+        width="100%"
+        height="500px"
+      >
+        <p>
+          It appears your browser doesn't support embedded PDFs. You can
+          <a href="{{ document.original_pdf.url }}">download the PDF</a>
+          instead.
+        </p>
+      </object>
+    </div>
+    {% endif %}
+    <div class="actions">
+      <a href="{% url 'pdf_signer:preview' document.id %}" class="btn"
+        >Continue to Sign</a
+      >
+    </div>
+    {% endif %}
+  </div>
+  {% endif %} {% if error %}
+  <div class="error-message">{{ error }}</div>
+  {% endif %}
+</div>

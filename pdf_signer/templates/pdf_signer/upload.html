@@ -1,0 +1,24 @@
+{% extends 'pdf_signer/base.html' %} {% block content %}
+<div class="upload-container">
+  <h2>Upload PDF for Signing</h2>
+  <form
+    method="POST"
+    enctype="multipart/form-data"
+    hx-post="{% url 'pdf_signer:upload' %}"
+    hx-encoding="multipart/form-data"
+    hx-target="#preview-area"
+  >
+    {% csrf_token %}
+    <div class="form-group">
+      <label for="pdf_file">Select PDF File:</label>
+      <input type="file" id="pdf_file" name="pdf_file" accept=".pdf" required />
+    </div>
+    <button type="submit">Upload PDF</button>
+  </form>
+  <div id="preview-area">
+    {% if error %}
+    <div class="error-message">{{ error }}</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
