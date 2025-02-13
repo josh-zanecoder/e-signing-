@@ -8,4 +8,5 @@ urlpatterns = [
     path('preview/<int:pk>/', views.preview_pdf, name='preview'),
     path('sign/<int:pk>/', views.sign_pdf, name='sign'),
     path('download/<int:pk>/', views.download_pdf, name='download'),
+    path('preview-signature/<int:pk>/', views.preview_signature, name='preview_signature'),
 ] 

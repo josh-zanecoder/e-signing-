@@ -1,258 +1,109 @@
-{% extends 'pdf_signer/base.html' %} {% block content %}
-<div class="preview-container">
-  <h2>Sign Document</h2>
+{% extends 'pdf_signer/base.html' %}
 
-  {% if document %} {% if document.original_pdf %}
-  <div class="document-workspace">
-    <!-- PDF Viewer -->
-    <div class="pdf-container">
-      <div id="pageContainer">
-        <canvas id="pdfCanvas"></canvas>
-        <div id="signatureLayer" class="signature-layer"></div>
-      </div>
-      <div class="pdf-controls">
-        <button id="prevPage" class="btn btn-secondary">Previous</button>
-        <span id="pageInfo"
-          >Page: <span id="pageNum">1</span> /
-          <span id="pageCount">1</span></span
-        >
-        <button id="nextPage" class="btn btn-secondary">Next</button>
-      </div>
-    </div>
-
-    <!-- Hidden Signature Panel - Shows only when clicking placeholder -->
-    <div id="signaturePanel" class="signature-panel" style="display: none">
-      <div class="signature-header">
-        <h3>Draw Your Signature</h3>
-        <button class="close-btn" onclick="hideSignaturePanel()">
-          &times;
-        </button>
-      </div>
-      <form id="signatureForm">
-        {% csrf_token %}
-        <div class="signature-pad-container">
-          <canvas id="signaturePad" width="400" height="150"></canvas>
-          <div class="signature-pad-buttons">
-            <button type="button" id="clearButton" class="btn btn-secondary">
-              Clear
-            </button>
-            <button type="button" id="confirmSignature" class="btn btn-primary">
-              Place Signature
-            </button>
-          </div>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Save button - Shows only after placing signature -->
-  <div
-    class="save-document-container"
-    style="text-align: center; margin-top: 20px"
-  >
-    <button id="saveButton" class="btn btn-success" style="display: none">
-      Save Signed Document
-    </button>
-    <div id="signature-result"></div>
-  </div>
-  {% endif %} {% else %}
-  <p>No document found.</p>
-  {% endif %}
-</div>
-
-<!-- PDF.js -->
+{% block extra_head %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+{% endblock %}
 
-<style>
-  .document-workspace {
-    display: flex;
-    gap: 20px;
-    margin: 20px auto;
-    max-width: 1200px;
-    position: relative;
-  }
+{% block body %}
+<div class="min-h-screen py-12">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Main Container -->
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+            <!-- Header -->
+            <div class="p-6 border-b border-gray-100">
+                <div class="flex items-center space-x-4">
+                    <div class="p-3 bg-blue-50 rounded-xl">
+                        <svg class="h-8 w-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                        </svg>
+                    </div>
+                    <h2 class="text-3xl font-bold text-gray-900">Sign Document</h2>
+                </div>
+            </div>
 
-  .pdf-container {
-    flex: 1;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    background: #f5f5f5;
-    min-height: 800px;
-    position: relative;
-    overflow: auto;
-  }
+            {% if document %}
+                {% if document.original_pdf %}
+                    <!-- Document Workspace -->
+                    <div class="p-6">
+                        <!-- PDF Viewer -->
+                        <div class="relative bg-gray-50 rounded-xl overflow-hidden">
+                            <div id="pageContainer" class="relative inline-block">
+                                <canvas id="pdfCanvas" class="max-w-full"></canvas>
+                                <div id="signatureLayer" class="absolute inset-0"></div>
+                            </div>
+                            
+                            <!-- PDF Controls -->
+                            <div class="flex items-center justify-center space-x-4 p-4 bg-white border-t border-gray-100">
+                                <button id="prevPage" 
+                                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 
+                                               rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 
+                                               focus:ring-offset-2 focus:ring-blue-500">
+                                    Previous
+                                </button>
+                                <span id="pageInfo" class="text-sm text-gray-600">
+                                    Page: <span id="pageNum" class="font-medium">1</span> /
+                                    <span id="pageCount" class="font-medium">1</span>
+                                </span>
+                                <button id="nextPage"
+                                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 
+                                               rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 
+                                               focus:ring-offset-2 focus:ring-blue-500">
+                                    Next
+                                </button>
+                            </div>
+                        </div>
 
-  #pageContainer {
-    position: relative;
-    margin: 0 auto;
-  }
+                        <!-- Signature Panel -->
+                        <div id="signaturePanel" class="fixed inset-0 bg-black bg-opacity-50 hidden" style="z-index: 1000;">
+                            <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
+                                        bg-white p-6 rounded-xl shadow-xl w-[450px]">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h3 class="text-xl font-semibold">Draw Your Signature</h3>
+                                    <button class="text-gray-500 hover:text-gray-700" onclick="hideSignaturePanel()">×</button>
+                                </div>
+                                <form id="signatureForm">
+                                    {% csrf_token %}
+                                    <div class="border rounded-lg overflow-hidden mb-4">
+                                        <canvas id="signaturePad" width="400" height="200" 
+                                                class="w-full touch-none"></canvas>
+                                    </div>
+                                    <div class="flex justify-end gap-3">
+                                        <button type="button" id="clearButton" 
+                                                class="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
+                                            Clear
+                                        </button>
+                                        <button type="button" id="confirmSignature"
+                                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                                            Place Signature
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
 
-  #pdfCanvas {
-    border: 1px solid #ddd;
-  }
-
-  .signature-layer {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-  }
-
-  .pdf-controls {
-    padding: 10px;
-    display: flex;
-    gap: 20px;
-    align-items: center;
-    justify-content: center;
-    background: #fff;
-    border-top: 1px solid #ddd;
-  }
-
-  .signature-panel {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-    z-index: 1000;
-  }
-
-  .signature-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-  }
-
-  .close-btn {
-    background: none;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    padding: 0 5px;
-  }
-
-  .save-document-container {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 1000;
-  }
-
-  .btn-success {
-    background-color: #28a745;
-  }
-
-  .instructions {
-    margin: 10px 0;
-    padding: 10px;
-    background: #e8f5e9;
-    border-radius: 4px;
-    font-size: 14px;
-  }
-
-  .signature-pad-container {
-    width: 400px;
-    padding: 10px;
-  }
-
-  #signaturePad {
-    width: 400px !important;
-    height: 150px !important;
-    border: 1px solid #e0e0e0;
-  }
-
-  .signature-pad-buttons {
-    display: flex;
-    gap: 10px;
-    margin-top: 10px;
-  }
-
-  .btn {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    color: white;
-  }
-
-  .btn-secondary {
-    background: #6c757d;
-  }
-
-  .btn-primary {
-    background: #007bff;
-  }
-
-  .success-message {
-    color: green;
-    padding: 10px;
-    background: #e8f5e9;
-    border-radius: 4px;
-    margin: 10px 0;
-  }
-
-  .error-message {
-    color: red;
-    padding: 10px;
-    background: #ffebee;
-    border-radius: 4px;
-    margin: 10px 0;
-  }
-
-  .preview-container {
-    padding: 20px;
-  }
-
-  h2 {
-    margin-bottom: 20px;
-  }
-
-  .signature-preview img {
-    max-width: 100%;
-    height: auto;
-  }
-
-  .sign-here-marker {
-    cursor: pointer !important;
-    background: rgba(0, 123, 255, 0.1);
-    border: 2px dashed #007bff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #007bff;
-    font-size: 14px;
-    position: absolute;
-    z-index: 100;
-    padding: 10px;
-    min-width: 150px;
-    min-height: 50px;
-    user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-  }
-
-  .signature-layer {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-  }
-
-  .sign-here-marker {
-    pointer-events: auto;
-  }
-</style>
+                        <!-- Save Button -->
+                        <div class="mt-6 text-center">
+                            <button id="saveButton" 
+                                    class="hidden px-8 py-3 text-base font-medium text-white 
+                                           bg-gradient-to-r from-green-600 to-green-700 
+                                           rounded-full hover:from-green-700 hover:to-green-800
+                                           focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                Save Signed Document
+                            </button>
+                            <div id="signature-result" class="mt-4"></div>
+                        </div>
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="p-6">
+                    <p class="text-gray-500 text-center">No document found.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
 
 <script>
   pdfjsLib.GlobalWorkerOptions.workerSrc =
@@ -272,10 +123,25 @@
       {
         backgroundColor: "rgb(255, 255, 255)",
         penColor: "rgb(0, 0, 0)",
-        minWidth: 2,
-        maxWidth: 4,
+        velocityFilterWeight: 0.7,
+        minWidth: 0.5,
+        maxWidth: 2.5,
+        throttle: 16,
       }
     );
+
+    // Add hideSignaturePanel function
+    window.hideSignaturePanel = function() {
+        signaturePanel.classList.add('hidden');
+        currentSignPosition = null;
+        signaturePad.clear();
+    };
+
+    function showSignaturePanel(position) {
+        currentSignPosition = position;
+        signaturePanel.classList.remove('hidden');
+        signaturePad.clear();
+    }
 
     // Load the PDF
     const loadingTask = pdfjsLib.getDocument("{{ document.original_pdf.url }}");
@@ -284,17 +150,6 @@
       document.getElementById("pageCount").textContent = pdf.numPages;
       renderPage(pageNum);
     });
-
-    function showSignaturePanel(position) {
-      currentSignPosition = position;
-      signaturePanel.style.display = "block";
-      signaturePad.clear();
-    }
-
-    function hideSignaturePanel() {
-      signaturePanel.style.display = "none";
-      currentSignPosition = null;
-    }
 
     async function renderPage(num) {
       const page = await pdfDoc.getPage(num);
@@ -312,26 +167,29 @@
 
       // Find and mark <<SIGN HERE>> placeholders
       const textContent = await page.getTextContent();
+      let signHereFound = false;
+      
       textContent.items.forEach((item) => {
-        if (item.str.includes("<<SIGN HERE>>")) {
-          // Convert PDF coordinates to viewport coordinates
+        if (item.str === "<<SIGN HERE>>" || 
+            item.str === "<SIGN HERE>" ||
+            item.str === "<<SIGN HERE>" ||
+            item.str === "<< SIGN HERE >>") {
+          
+          signHereFound = true;
           const rect = viewport.convertToViewportRectangle([
             item.transform[4],
-            item.transform[5] - 20,
-            item.transform[4] + 150,
-            item.transform[5] + 50,
+            item.transform[5],
+            item.transform[4] + item.width,
+            item.transform[5] + item.height
           ]);
 
           const signHereDiv = document.createElement("div");
-          signHereDiv.className = "sign-here-marker";
-          signHereDiv.style.position = "absolute";
+          signHereDiv.className = "absolute border-2 border-dashed border-blue-400 bg-blue-50 bg-opacity-10 cursor-pointer";
           signHereDiv.style.left = `${rect[0]}px`;
-          signHereDiv.style.top = `${rect[1]}px`;
-          signHereDiv.style.width = "150px";
-          signHereDiv.style.height = "70px";
-          signHereDiv.innerHTML = "<<SIGN HERE>>";
+          signHereDiv.style.top = `${rect[1] - 30}px`; // Adjusted for better positioning
+          signHereDiv.style.width = "200px"; // Fixed width
+          signHereDiv.style.height = "60px"; // Fixed height
 
-          // Add click event listener
           signHereDiv.onclick = function (e) {
             e.preventDefault();
             e.stopPropagation();
@@ -339,78 +197,106 @@
               page: pageNum,
               rect: rect,
               element: signHereDiv,
+              originalPosition: {
+                x: rect[0],
+                y: rect[1] - 30,
+                width: 200,
+                height: 60
+              }
             };
-            document.getElementById("signaturePanel").style.display = "block";
+            signaturePanel.classList.remove('hidden');
           };
-
-          // Also add touch event for mobile devices
-          signHereDiv.addEventListener(
-            "touchstart",
-            function (e) {
-              e.preventDefault();
-              e.stopPropagation();
-              currentSignPosition = {
-                page: pageNum,
-                rect: rect,
-                element: signHereDiv,
-              };
-              document.getElementById("signaturePanel").style.display = "block";
-            },
-            false
-          );
 
           signatureLayer.appendChild(signHereDiv);
         }
       });
+
+      if (!signHereFound && pageNum === 1) {
+        alert('No signature placeholder "<<SIGN HERE>>" found on this page. Please check if the text format matches exactly.');
+      }
     }
 
-    // Make sure signature layer is clickable
-    document.addEventListener("DOMContentLoaded", function () {
-      const signatureLayer = document.getElementById("signatureLayer");
-      signatureLayer.style.pointerEvents = "none"; // Allow clicks to pass through
-    });
+    document.getElementById("confirmSignature").addEventListener("click", async () => {
+      if (signaturePad.isEmpty()) {
+        alert("Please draw your signature first.");
+        return;
+      }
 
-    // Handle signature placement
-    document
-      .getElementById("confirmSignature")
-      .addEventListener("click", () => {
-        if (signaturePad.isEmpty()) {
-          alert("Please draw your signature first.");
-          return;
-        }
+      if (currentSignPosition) {
+        try {
+          const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+          const formData = new FormData();
+          formData.append('signature', signaturePad.toDataURL());
+          formData.append('box_x', currentSignPosition.originalPosition.x);
+          formData.append('box_y', currentSignPosition.originalPosition.y);
+          formData.append('box_width', currentSignPosition.originalPosition.width);
+          formData.append('box_height', currentSignPosition.originalPosition.height);
 
-        if (currentSignPosition) {
-          const signatureImg = new Image();
-          signatureImg.src = signaturePad.toDataURL();
+          const response = await fetch("{% url 'pdf_signer:preview_signature' document.id %}", {
+            method: 'POST',
+            headers: {
+              'X-CSRFToken': csrfToken,
+            },
+            body: formData
+          });
 
-          signatureImg.onload = function () {
+          const data = await response.json();
+
+          if (data.success) {
+            // Reload the PDF if a new version is provided
+            if (data.pdf_url) {
+                const loadingTask = pdfjsLib.getDocument(data.pdf_url);
+                loadingTask.promise.then(function(pdf) {
+                    pdfDoc = pdf;
+                    renderPage(pageNum);
+                });
+            }
+
             const signatureDiv = document.createElement("div");
             signatureDiv.style.position = "absolute";
-            signatureDiv.style.left = currentSignPosition.element.style.left;
-            signatureDiv.style.top = currentSignPosition.element.style.top;
-            signatureDiv.style.width = currentSignPosition.element.style.width;
-            signatureDiv.style.height =
-              currentSignPosition.element.style.height;
-
+            signatureDiv.style.left = `${data.position.x}px`;
+            signatureDiv.style.top = `${data.position.y}px`;
+            signatureDiv.style.width = `${data.position.width}px`;
+            signatureDiv.style.height = `${data.position.height}px`;
+            signatureDiv.style.zIndex = "10";
+            
             const img = document.createElement("img");
-            img.src = signatureImg.src;
+            img.src = data.signature_url + '?t=' + new Date().getTime();
             img.style.width = "100%";
             img.style.height = "100%";
             img.style.objectFit = "contain";
+            img.style.pointerEvents = "none";
 
             signatureDiv.appendChild(img);
-            currentSignPosition.element.remove();
             signatureLayer.appendChild(signatureDiv);
 
-            document.getElementById("signaturePanel").style.display = "none";
-            document.getElementById("saveButton").style.display = "block";
+            // Hide the signature panel
+            signaturePanel.classList.add('hidden');
+            
+            // Show the save button
+            document.getElementById("saveButton").classList.remove('hidden');
 
-            signaturePositions.push(currentSignPosition);
-          };
+            // Store signature data for saving later
+            signaturePositions.push({
+                page: currentSignPosition.page,
+                rect: [
+                    data.position.x,  // Use the exact position from preview
+                    data.position.y,  // Use the exact position from preview
+                    data.position.x + data.position.width,  // Use exact width
+                    data.position.y + data.position.height  // Use exact height
+                ],
+                signatureData: data.signature_url
+            });
+          } else {
+            throw new Error(data.error || 'Failed to process signature');
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          alert('Failed to process signature. Please try again.');
         }
-      });
+      }
+    });
 
-    // Navigation buttons
     document.getElementById("prevPage").addEventListener("click", () => {
       if (pageNum <= 1) return;
       pageNum--;
@@ -423,53 +309,52 @@
       renderPage(pageNum);
     });
 
-    // Clear signature
     document.getElementById("clearButton").addEventListener("click", () => {
       signaturePad.clear();
     });
 
-    // Save document
-    document
-      .getElementById("saveButton")
-      .addEventListener("click", async function () {
-        try {
-          const csrfToken = document.querySelector(
-            "[name=csrfmiddlewaretoken]"
-          ).value;
-          const signatureData = signaturePad.toDataURL();
-          const formData = new FormData();
-          formData.append("signature", signatureData);
-          formData.append("positions", JSON.stringify(signaturePositions));
+    document.getElementById("saveButton").addEventListener("click", async function () {
+      try {
+        const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+        const formData = new FormData();
+        
+        // Send all signature positions with their data
+        const positionsWithData = signaturePositions.map(pos => ({
+          page: pos.page,
+          rect: [
+            pos.rect[0],
+            pos.rect[1],
+            pos.rect[2],
+            pos.rect[3]
+          ],
+          signatureData: pos.signatureData
+        }));
+        
+        formData.append("positions", JSON.stringify(positionsWithData));
 
-          const response = await fetch(
-            "{% url 'pdf_signer:sign' document.id %}",
-            {
-              method: "POST",
-              headers: {
-                "X-CSRFToken": csrfToken,
-              },
-              body: formData,
-            }
-          );
+        const response = await fetch("{% url 'pdf_signer:sign' document.id %}", {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": csrfToken,
+          },
+          body: formData,
+        });
 
-          const data = await response.json();
+        const data = await response.json();
 
-          if (data.success) {
-            document.getElementById("signature-result").innerHTML =
-              '<div class="success-message">Document signed successfully!</div>';
-
-            // Download the signed PDF
-            window.location.href = data.download_url;
-          } else {
-            throw new Error(data.error || "Failed to sign document");
-          }
-        } catch (error) {
-          console.error("Error:", error);
-          document.getElementById(
-            "signature-result"
-          ).innerHTML = `<div class="error-message">Error: ${error.message}</div>`;
+        if (data.success) {
+          document.getElementById("signature-result").innerHTML =
+            '<div class="text-green-600 font-medium">Document signed successfully!</div>';
+          window.location.href = data.download_url;
+        } else {
+          throw new Error(data.error || "Failed to sign document");
         }
-      });
+      } catch (error) {
+        console.error("Error:", error);
+        document.getElementById("signature-result").innerHTML = 
+          `<div class="text-red-600 font-medium">Error: ${error.message}</div>`;
+      }
+    });
   });
 </script>
 {% endblock %}

@@ -1,24 +1,156 @@
-{% extends 'pdf_signer/base.html' %} {% block content %}
-<div class="upload-container">
-  <h2>Upload PDF for Signing</h2>
-  <form
-    method="POST"
-    enctype="multipart/form-data"
-    hx-post="{% url 'pdf_signer:upload' %}"
-    hx-encoding="multipart/form-data"
-    hx-target="#preview-area"
-  >
-    {% csrf_token %}
-    <div class="form-group">
-      <label for="pdf_file">Select PDF File:</label>
-      <input type="file" id="pdf_file" name="pdf_file" accept=".pdf" required />
+{% extends 'pdf_signer/base.html' %}
+
+{% block body %}
+<div class="min-h-screen py-12">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Upload Card -->
+        {% if not success %}
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden backdrop-blur-lg backdrop-filter">
+                <div class="p-8">
+                    <div class="flex items-center space-x-4 mb-6">
+                        <div class="p-3 bg-blue-50 rounded-xl">
+                            <svg class="h-8 w-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                            </svg>
+                        </div>
+                        <h2 class="text-3xl font-bold text-gray-900">Upload PDF for Signing</h2>
+                    </div>
+
+                    <form method="POST" 
+                        enctype="multipart/form-data"
+                        hx-post="{% url 'pdf_signer:upload' %}"
+                        hx-encoding="multipart/form-data"
+                        hx-target="#preview-area"
+                        class="space-y-6">
+                        {% csrf_token %}
+                        <div class="space-y-3">
+                            <label for="pdf_file" class="block text-sm font-medium text-gray-700">
+                                Select your PDF document
+                            </label>
+                            <div class="relative">
+                                <input type="file" 
+                                    id="pdf_file" 
+                                    name="pdf_file" 
+                                    accept=".pdf" 
+                                    required
+                                    class="block w-full text-sm text-gray-500
+                                        file:mr-4 file:py-3 file:px-4
+                                        file:rounded-full file:border-0
+                                        file:text-sm file:font-semibold
+                                        file:bg-blue-50 file:text-blue-700
+                                        hover:file:bg-blue-100
+                                        focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
+                                        transition-all duration-150
+                                        cursor-pointer" />
+                            </div>
+                        </div>
+                        <button type="submit" 
+                                class="w-full flex items-center justify-center px-8 py-3 border border-transparent
+                                    text-base font-medium rounded-full text-white
+                                    bg-gradient-to-r from-blue-600 to-indigo-600
+                                    hover:from-blue-700 hover:to-indigo-700
+                                    focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
+                                    transform transition-all duration-150
+                                    hover:scale-[1.02] active:scale-[0.98]">
+                            <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                            </svg>
+                            Upload PDF
+                        </button>
+                    </form>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Preview Area -->
+        <div id="preview-area" class="mt-8">
+            {% if success %}
+                <!-- Success Message -->
+                <div class="rounded-lg bg-green-50 p-4 mb-6 border border-green-100">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium text-green-800">{{ message }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                {% if document %}
+                    {% if document.original_pdf %}
+                        <!-- PDF Preview Card -->
+                        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                            <div class="border-b border-gray-100 p-6">
+                                <h3 class="text-xl font-bold text-gray-900">PDF Preview</h3>
+                            </div>
+                            <div class="p-2 bg-gray-50">
+                                <object data="{{ document.original_pdf.url }}"
+                                        type="application/pdf"
+                                        class="w-full h-[600px] rounded-xl">
+                                    <p class="p-6 text-gray-600">
+                                        It appears your browser doesn't support embedded PDFs.
+                                        <a href="{{ document.original_pdf.url }}" 
+                                           class="text-blue-600 hover:text-blue-700 underline">
+                                            Download the PDF
+                                        </a>
+                                        instead.
+                                    </p>
+                                </object>
+                            </div>
+                            <div class="p-6 bg-white border-t border-gray-100">
+                                <div class="flex justify-between items-center space-x-4">
+                                    <button onclick="window.location.href='/'" 
+                                            class="flex items-center px-6 py-2.5 border border-gray-300 
+                                                shadow-sm rounded-full text-gray-700 bg-white
+                                                hover:bg-gray-50 focus:outline-none focus:ring-2 
+                                                focus:ring-offset-2 focus:ring-blue-500
+                                                transition-all duration-150">
+                                        <svg class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                                d="M7 16l-4-4m0 0l4-4m-4 4h18"/>
+                                        </svg>
+                                        Upload Another
+                                    </button>
+                                    <a href="{% url 'pdf_signer:preview' document.id %}"
+                                       class="flex items-center px-6 py-2.5 border border-transparent 
+                                            rounded-full text-white shadow-sm
+                                            bg-gradient-to-r from-blue-600 to-indigo-600
+                                            hover:from-blue-700 hover:to-indigo-700
+                                            focus:outline-none focus:ring-2 focus:ring-offset-2 
+                                            focus:ring-blue-500 transition-all duration-150">
+                                        Continue to Sign
+                                        <svg class="h-5 w-5 ml-2" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                                d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                                        </svg>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endif %}
+            {% endif %}
+
+            {% if error %}
+                <div class="rounded-lg bg-red-50 p-4 border border-red-100">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium text-red-800">{{ error }}</p>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
     </div>
-    <button type="submit">Upload PDF</button>
-  </form>
-  <div id="preview-area">
-    {% if error %}
-    <div class="error-message">{{ error }}</div>
-    {% endif %}
-  </div>
 </div>
 {% endblock %}
